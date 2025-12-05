@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const { initBucket } = require('./gfsBucket'); // <--- IMPORTANTE: Importar esto
 
 const app = express();
 
@@ -23,3 +24,4 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
 });
+

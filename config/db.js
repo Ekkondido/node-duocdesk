@@ -1,11 +1,12 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log("MongoDB conectado correctamente");
-    } catch (err) {
-        console.error("Error conectando a MongoDB:", err.message);
+        // Mongoose 7+ ya no pide opciones raras
+        const conn = await mongoose.connect(process.env.MONGO_URI);
+        console.log(`MongoDB Conectado: ${conn.connection.host}`);
+    } catch (error) {
+        console.error(error);
         process.exit(1);
     }
 };

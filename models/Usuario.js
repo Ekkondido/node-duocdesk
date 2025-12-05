@@ -12,6 +12,12 @@ const UsuarioSchema = new mongoose.Schema({
         enum: ['USER', 'ADMIN'],
         default: 'USER'
     },
+
+    fotoPerfilId: {
+        type: mongoose.Schema.Types.ObjectId, // Esto es correcto
+        default: null
+    },
+
     fechaRegistro: { type: Date, default: Date.now }
 });
 
