@@ -128,4 +128,42 @@ router.get("/:id/foto", async (req, res) => {
     }
 });
 
+// OBTENER PERFIL DEL USUARIO
+router.get("/:id", async (req, res) => {
+    try {
+        const usuario = await Usuario.findById(req.params.id);
+        if (!usuario) return res.status(404).json({ error: "Usuario no encontrado" });
+        res.json(usuario);
+    } catch (err) {
+        res.status(500).json({ error: "Error obteniendo perfil" });
+    }
+});
+
+// ACTUALIZAR PERFIL (nombre, apellido, carrera, edad)
+router.put("/:id", async (req, res) => {
+    try {
+        const camposActualizables = {
+            nombre: req.body.nombre,
+            apellido: req.body.apellido,
+            carrera: req.body.carrera,
+            edad: req.body.edad
+        };
+
+        const usuarioActualizado = await Usuario.findByIdAndUpdate(
+            req.params.id,
+            camposActualizables,
+            { new: true }
+        );
+
+        if (!usuarioActualizado) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        res.json(usuarioActualizado);
+    } catch (err) {
+        res.status(500).json({ error: "Error actualizando perfil" });
+    }
+});
+
+
 module.exports = router;
