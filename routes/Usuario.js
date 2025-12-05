@@ -1,12 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const Usuario = require("../models/Usuario");
-const upload = require("../storage");
+const upload = require("../storage"); // Tu archivo storage.js corregido
+const { getBucket } = require("../fileController"); // Tu archivo gfsBucket.js corregido
 const mongoose = require("mongoose");
+// Importamos la función que acabamos de arreglar
+const { subirBufferAGridFS } = require("../fileController");
 
-// REGISTRO
+//  REGISTRO DE USUARIO
 router.post("/", async (req, res) => {
+    console.log("Datos recibidos en Registro:", req.body);
+
     try {
+        // Verificar email duplicado
         const existe = await Usuario.findOne({ email: req.body.email });
         if (existe) {
             return res.status(409).json({ error: "Email ya registrado" });
@@ -14,22 +20,27 @@ router.post("/", async (req, res) => {
 
         const nuevoUsuario = new Usuario(req.body);
         await nuevoUsuario.save();
+
         res.status(201).json(nuevoUsuario);
 
     } catch (error) {
+        console.error("Error al registrar:", error);
         res.status(500).json({ error: "Error al registrar usuario" });
     }
 });
 
 // LOGIN
 router.post("/login", async (req, res) => {
-    try {
-        const usuario = await Usuario.findOne({
-            email: req.body.email,
-            password: req.body.password
-        });
+    const { email, password } = req.body;
 
-        if (!usuario) return res.status(401).json({ msg: "Credenciales incorrectas" });
+    console.log("Intento de login:", req.body);
+
+    try {
+        const usuario = await Usuario.findOne({ email, password });
+
+        if (!usuario) {
+            return res.status(401).json({ msg: "Credenciales incorrectas" });
+        }
 
         res.json(usuario);
 
@@ -38,100 +49,88 @@ router.post("/login", async (req, res) => {
     }
 });
 
-// LISTAR
+//LISTAR USUARIOS
 router.get("/", async (req, res) => {
     const usuarios = await Usuario.find();
     res.json(usuarios);
 });
 
-// SUBIR FOTO
+module.exports = router;
+
+// 📸 RUTA POST: SUBIDA AUTOMÁTICA + LIMPIEZA
 router.post("/:id/foto", upload.single("foto"), async (req, res) => {
     try {
-        if (!req.file?.id) {
-            return res.status(400).json({ error: "No se subió archivo" });
+        // 1. Verificación: Si estamos aquí, Multer YA SUBIÓ el archivo a GridFS
+        if (!req.file || !req.file.id) {
+            return res.status(400).json({ error: "Error: No se generó el archivo en Mongo." });
         }
+
+        console.log("--> Foto guardada automáticamente. ID:", req.file.id);
 
         const userId = req.params.id;
         const nuevaFotoId = req.file.id;
 
+        // 2. BUSCAR USUARIO (Para borrar la foto vieja)
         const usuario = await Usuario.findById(userId);
 
-        // borrar foto antigua
-        if (usuario?.fotoPerfilId) {
-            const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: "perfil" });
+        if (usuario && usuario.fotoPerfilId) {
+            const db = mongoose.connection.db;
+            const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'perfil' });
+            
             try {
-                await bucket.delete(new mongoose.Types.ObjectId(usuario.fotoPerfilId));
-            } catch {}
+                // Borramos la foto anterior usando su ID
+                const idAntiguo = new mongoose.Types.ObjectId(usuario.fotoPerfilId);
+                await bucket.delete(idAntiguo);
+                console.log("--> ♻️ Foto antigua eliminada correctamente.");
+            } catch (error) {
+                console.warn("--> No se pudo borrar foto antigua (quizás no existía).");
+            }
         }
 
-        const actualizado = await Usuario.findByIdAndUpdate(
-            userId,
+        // 3. ACTUALIZAR USUARIO
+        const usuarioActualizado = await Usuario.findByIdAndUpdate(
+            userId, 
             { fotoPerfilId: nuevaFotoId },
             { new: true }
         );
 
-        res.json({ mensaje: "Foto actualizada", usuario: actualizado });
+        // Respuesta para la App
+        res.json({ 
+            mensaje: "Foto actualizada", 
+            usuario: usuarioActualizado 
+        });
 
     } catch (error) {
-        res.status(500).json({ error: "Error subiendo foto" });
+        console.error(error);
+        res.status(500).json({ error: "Error en el servidor" });
     }
 });
 
-// OBTENER PERFIL
-router.get("/:id", async (req, res) => {
+// 🖼️ RUTA GET: VER FOTO (Vital para que se vea en la app)
+router.get("/:id/foto", async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.params.id);
-        if (!usuario) return res.status(404).json({ error: "No encontrado" });
-        res.json(usuario);
+        if (!usuario || !usuario.fotoPerfilId) return res.status(404).send("Sin foto");
 
-    } catch {
-        res.status(500).json({ error: "Error obteniendo perfil" });
-    }
-});
+        const db = mongoose.connection.db;
+        const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'perfil' });
 
-// ACTUALIZAR PERFIL
-router.put("/:id", async (req, res) => {
-    try {
-        const actualizado = await Usuario.findByIdAndUpdate(
-            req.params.id,
-            {
-                nombre: req.body.nombre,
-                apellido: req.body.apellido,
-                carrera: req.body.carrera,
-                edad: req.body.edad
-            },
-            { new: true }
-        );
+        let downloadId;
+        try {
+            downloadId = new mongoose.Types.ObjectId(usuario.fotoPerfilId);
+        } catch (e) { return res.status(400).send("ID Inválido"); }
 
-        if (!actualizado) return res.status(404).json({ error: "No encontrado" });
+        const downloadStream = bucket.openDownloadStream(downloadId);
+        
+        res.set('Content-Type', 'image/jpeg');
+        downloadStream.pipe(res);
+        
+        downloadStream.on('error', () => {
+             if(!res.headersSent) res.status(404).send("Archivo no encontrado");
+        });
 
-        res.json(actualizado);
-
-    } catch {
-        res.status(500).json({ error: "Error actualizando perfil" });
-    }
-});
-
-// ELIMINAR USUARIO
-router.delete("/:id", async (req, res) => {
-    try {
-        const usuario = await Usuario.findById(req.params.id);
-        if (!usuario) return res.status(404).json({ error: "No encontrado" });
-
-        // borrar foto si tiene
-        if (usuario.fotoPerfilId) {
-            const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: "perfil" });
-            try {
-                await bucket.delete(new mongoose.Types.ObjectId(usuario.fotoPerfilId));
-            } catch {}
-        }
-
-        await Usuario.findByIdAndDelete(req.params.id);
-
-        res.json({ mensaje: "Usuario eliminado correctamente" });
-
-    } catch {
-        res.status(500).json({ error: "Error eliminando usuario" });
+    } catch (err) {
+        res.status(500).send("Error servidor");
     }
 });
 

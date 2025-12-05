@@ -13,7 +13,7 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-// Rutas usuarios
+// Rutas correctas: SOLO este
 app.use("/api/usuarios", require("./routes/Usuario"));
 
 app.get('/', (req, res) => {
