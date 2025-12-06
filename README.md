@@ -1,40 +1,35 @@
+# DuocDesk Backend
+
 Backend oficial de DuocDesk, un sistema tipo Trello diseñado para estudiantes de Duoc UC.
 Este servicio expone una API REST que maneja usuarios, login, actualización de perfil y subida de fotos a través de GridFS.
 
-TECNOLOGIAS USADAS:
+---
 
-Node.js
+## Tecnologías Usadas
 
-Express
+Este proyecto utiliza un stack moderno basado en JavaScript:
 
-MongoDB
+* **Node.js**: Entorno de ejecución.
+* **Express**: Framework para el servidor.
+* **MongoDB**: Base de datos NoSQL.
+* **Mongoose**: ODM para modelar los datos.
+* **GridFS**: Para almacenamiento de fotos de perfil.
+* **Multer**: Middleware de subida de imágenes.
 
-Mongoose
+---
 
-GridFS para almacenamiento de fotos de perfil
-
-Multer como middleware de subida de imágenes
-
-
-INSTALACION
-
+## Instalación
 Clonar repositorio: "git clone https://github.com/tuusuario/DuocDesk.git"
-
 cd DuocDesk - para ubicarse en la carpeta
-
 npm install - ejecutamos 
-
 Port 4000
-
 MONGO_URI=mongodb://98.91.150.2:27017/DuocDesk
-
 npm start - para iniciar con el Backend
-
 El servidor queda corriendo - http://localhost:4000
 
+---
 
-ENDPOINTS
-
+## ENDPOINTS
 POST /api/usuarios
 
 Registrar usuario
@@ -58,8 +53,7 @@ Subir foto de perfil (GridFS).
 
 GET /api/usuarios/:id/foto
 
-
-ESTRUCTURA
+## ESTRUCTURA
 
 <img width="294" height="404" alt="image" src="https://github.com/user-attachments/assets/b9f2c664-f590-47b6-9a0d-8cf2400e1ead" />
 
