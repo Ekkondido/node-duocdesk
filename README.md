@@ -19,7 +19,11 @@ Este proyecto utiliza un stack moderno basado en JavaScript:
 ---
 
 ## Instalación
-Clonar repositorio: "git clone https://github.com/tuusuario/DuocDesk.git"
+Clona este repositorio:
+    ```bash
+    git clone https://github.com/Ekkondido/node-duocdesk
+    ```
+
 cd DuocDesk - para ubicarse en la carpeta
 npm install - ejecutamos 
 Port 4000
@@ -30,30 +34,43 @@ El servidor queda corriendo - http://localhost:4000
 ---
 
 ## ENDPOINTS
-POST /api/usuarios
+
+-GET /api/usuarios
+
+-POST /api/usuarios
 
 Registrar usuario
 Envía un JSON con nombre, apellido, email, password, etc.
 
-POST /api/usuarios/login
+-POST /api/usuarios/login
 
 Iniciar sesión
 Retorna datos del usuario.
 
-PUT /api/usuarios/:id
+-PUT /api/usuarios/:id
 
 Actualizar perfil completo del usuario.
 
-DELETE /api/usuarios/:id
+-DELETE /api/usuarios/:id
 
 Eliminar cuenta del usuario.
 
-POST /api/usuarios/:id/foto
+-POST /api/usuarios/:id/foto
 Subir foto de perfil (GridFS).
 
-GET /api/usuarios/:id/foto
+-GET /api/usuarios/:id/foto
 
 ## ESTRUCTURA
 
 <img width="294" height="404" alt="image" src="https://github.com/user-attachments/assets/b9f2c664-f590-47b6-9a0d-8cf2400e1ead" />
+
+---
+
+Este proyecto fue creado en equipo por:
+
+* **DamagedGhost (Felipe Vasquez)**
+* **diegoparra-git (Diego Parra)**
+* **Ekkondido (Marcelo Mancilla)**
+
+¡Gracias por revisar nuestro proyecto! ❤️
 
