@@ -1,7 +1,10 @@
-Backend oficial de DuocDesk, un sistema tipo Trello diseñado para estudiantes de Duoc UC.
-Este servicio expone una API REST que maneja usuarios, login, actualización de perfil y subida de fotos a través de GridFS.
+DuocDesk Backend API — Node.js, Express y MongoDB
 
-Tecnologia utilizadas
+Backend oficial de DuocDesk, un sistema tipo Trello diseñado para estudiantes de Duoc UC.
+Este servicio expone una API REST que maneja registro y autenticación de usuarios, edición de perfil y subida de fotos mediante GridFS.
+
+Tecnologías Utilizadas
+
 Node.js
 
 Express
@@ -10,44 +13,70 @@ MongoDB
 
 Mongoose
 
-GridFS para almacenamiento de fotos de perfil
+GridFS (almacenamiento de imágenes)
 
-Multer como middleware de subida de imágenes
+Multer (middleware para subida de archivos)
 
-Instalacion
-Clonar repositorio: "git clone https://github.com/tuusuario/DuocDesk.git"
-cd DuocDesk - para ubicarse en la carpeta
-npm install - ejecutamos 
-Port 4000
+Instalación y Ejecución
+
+Clonar repositorio:
+
+git clone https://github.com/tuusuario/DuocDesk.git
+
+
+Entrar al proyecto:
+
+cd DuocDesk
+
+
+Instalar dependencias:
+
+npm install
+
+
+Configurar variables de entorno en un archivo .env:
+
+PORT=4000
 MONGO_URI=mongodb://98.91.150.2:27017/DuocDesk
-npm start - para iniciar con el Backend
-El servidor queda corriendo - http://localhost:4000
 
-ENDPOINTS
+
+Iniciar el servidor:
+
+npm start
+
+
+El backend quedará disponible en:
+http://localhost:4000
+
+Endpoints Principales
 POST /api/usuarios
 
-Registrar usuario
-Envía un JSON con nombre, apellido, email, password, etc.
+Registro de usuario.
+Requiere un JSON con: nombre, apellido, email, password, carrera, edad.
 
 POST /api/usuarios/login
 
-Iniciar sesión
-Retorna datos del usuario.
+Inicio de sesión.
+Retorna los datos del usuario autenticado.
 
 PUT /api/usuarios/:id
 
-Actualizar perfil completo del usuario.
+Actualiza los datos del perfil de un usuario.
 
 DELETE /api/usuarios/:id
 
-Eliminar cuenta del usuario.
+Elimina un usuario por su ID.
 
 POST /api/usuarios/:id/foto
-Subir foto de perfil (GridFS).
+
+Sube una foto de perfil utilizando GridFS.
+Requiere form-data con el campo:
+
+foto: archivo.jpg
 
 GET /api/usuarios/:id/foto
 
+Retorna la imagen almacenada en GridFS asociada al usuario.
+
+Ejemplo de Foto Guardada
 <img width="294" height="404" alt="image" src="https://github.com/user-attachments/assets/b9f2c664-f590-47b6-9a0d-8cf2400e1ead" />
-
-
-
