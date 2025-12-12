@@ -7,7 +7,7 @@ const subirBufferAGridFS = (buffer, nombreArchivo, mimeType) => {
         const db = mongoose.connection.db;
         if (!db) return reject(new Error("No hay conexión a la BD"));
 
-        // Usamos el bucket 'perfil' como querías
+        // Usamos el bucket 'perfil'
         const bucket = new mongoose.mongo.GridFSBucket(db, {
             bucketName: 'perfil' 
         });

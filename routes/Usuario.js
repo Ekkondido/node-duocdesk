@@ -97,7 +97,11 @@ router.post("/:id/foto", upload.single("foto"), async (req, res) => {
 router.get("/:id/foto", async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.params.id);
-        if (!usuario?.fotoPerfilId) return res.status(404).send("Sin foto");
+        
+        // Verificamos si el usuario tiene un ID de foto guardado
+        if (!usuario?.fotoPerfilId) {
+            return res.status(404).send("Usuario sin foto asignada");
+        }
 
         const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
             bucketName: "perfil"
@@ -107,10 +111,30 @@ router.get("/:id/foto", async (req, res) => {
             new mongoose.Types.ObjectId(usuario.fotoPerfilId)
         );
 
+        // --- AGREGA ESTO PARA EVITAR EL CRASH ---
+        downloadStream.on('error', (error) => {
+            // Si el archivo no existe físicamente en GridFS (pero el usuario tiene el ID)
+            if (error.code === 'ENOENT') {
+                console.warn(`Foto corrupta para usuario ${req.params.id}: ID existe en usuario pero no en GridFS`);
+                // Devolvemos 404 en lugar de tumbar el server
+                // Importante: Si ya se enviaron headers, esto podría fallar, pero evita el crash global
+                if (!res.headersSent) {
+                    return res.status(404).send("Archivo de imagen no encontrado");
+                }
+            } else {
+                // Otros errores de stream
+                if (!res.headersSent) {
+                    return res.status(500).send("Error procesando imagen");
+                }
+            }
+        });
+        // ----------------------------------------
+
         res.set("Content-Type", "image/jpeg");
         downloadStream.pipe(res);
 
     } catch (err) {
+        console.error(err);
         res.status(500).send("Error servidor");
     }
 });
