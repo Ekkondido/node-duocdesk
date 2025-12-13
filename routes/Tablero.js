@@ -34,4 +34,14 @@ router.put("/:id", async (req, res) => {
     }
 });
 
+// DELETE: Eliminar un tablero
+router.delete("/:id", async (req, res) => {
+    try {
+        await Tablero.findByIdAndDelete(req.params.id);
+        res.json({ message: "Tablero eliminado" });
+    }   catch (err) {
+        res.status(500).json({ error: "Error eliminando tablero" });
+    }
+});
+
 module.exports = router;
