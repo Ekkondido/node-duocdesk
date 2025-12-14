@@ -17,7 +17,8 @@ router.get("/", async (req, res) => {
             filtro = {
                 $or: [
                     { owner: userId },
-                    { members: userId }
+                    { members: userId },
+                    { admin}
                 ]
             };
         }
@@ -151,6 +152,110 @@ router.delete("/:id/miembros/:miembroId", async (req, res) => {
 
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+router.post("/:id/listas", async (req, res) => {
+    const { titulo } = req.body; // El frontend manda { "titulo": "Pendientes" }
+
+    try {
+        const tablero = await Tablero.findById(req.params.id);
+        if (!tablero) {
+            return res.status(404).json({ message: "Tablero no encontrado" });
+        }
+
+        // Creamos el objeto lista (las tarjetas empiezan vacías)
+        const nuevaLista = {
+            titulo: titulo,
+            tarjetas: [] 
+        };
+
+        // Lo empujamos al array
+        tablero.listas.push(nuevaLista);
+        await tablero.save();
+
+        // Devolvemos el tablero actualizado
+        const tableroActualizado = await Tablero.findById(req.params.id)
+            .populate("owner", "nombre email")
+            .populate("members", "nombre email");
+
+        res.json(tableroActualizado);
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.delete("/:id/listas/:listaId", async (req, res) => {
+    try {
+        const { id, listaId } = req.params;
+
+        const tablero = await Tablero.findById(id);
+        if (!tablero) {
+            return res.status(404).json({ message: "Tablero no encontrado" });
+        }
+
+        // Usamos $pull para sacar la sub-documento del array por su _id
+        // Mongoose maneja los IDs de subdocumentos automáticamente
+        await Tablero.findByIdAndUpdate(id, {
+            $pull: { listas: { _id: listaId } }
+        });
+
+        // Devolvemos el tablero actualizado
+        const tableroActualizado = await Tablero.findById(id)
+            .populate("owner", "nombre email")
+            .populate("members", "nombre email");
+
+        res.json(tableroActualizado);
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST: Crear tarjeta en una lista
+router.post("/:id/listas/:listaId/tarjetas", async (req, res) => {
+    const { titulo } = req.body;
+    try {
+        const tablero = await Tablero.findById(req.params.id);
+        if (!tablero) return res.status(404).json({message: "Tablero no encontrado"});
+
+        // Buscamos la lista específica por su ID
+        const lista = tablero.listas.id(req.params.listaId);
+        if (!lista) return res.status(404).json({message: "Lista no encontrada"});
+
+        // Agregamos la tarjeta (Mongoose le pone _id automático)
+        lista.tarjetas.push({ titulo }); 
+        await tablero.save();
+
+        const actualizado = await Tablero.findById(req.params.id)
+            .populate("owner", "nombre email")
+            .populate("members", "nombre email");
+        res.json(actualizado);
+    } catch(err) {
+        res.status(500).json({error: err.message});
+    }
+});
+
+// DELETE: Eliminar tarjeta
+router.delete("/:id/listas/:listaId/tarjetas/:tarjetaId", async (req, res) => {
+    try {
+        const tablero = await Tablero.findById(req.params.id);
+        if (!tablero) return res.status(404).json({message: "Tablero no encontrado"});
+
+        const lista = tablero.listas.id(req.params.listaId);
+        if (lista) {
+            // Sacamos la tarjeta del array
+            lista.tarjetas.pull({ _id: req.params.tarjetaId });
+            await tablero.save();
+        }
+
+        const actualizado = await Tablero.findById(req.params.id)
+            .populate("owner", "nombre email")
+            .populate("members", "nombre email");
+        res.json(actualizado);
+    } catch(err) {
+        res.status(500).json({error: err.message});
     }
 });
 
