@@ -3,27 +3,33 @@ const router = express.Router();
 const Tablero = require("../models/Tablero");
 const Usuario = require("../models/Usuario");
 const Notificacion = require("../models/Notification");
-
-// GET: Obtener tableros filtrados por usuario (Owner o Miembro)
+// GET: Obtener tableros (Con lógica Super Admin)
 router.get("/", async (req, res) => {
     try {
-        const { userId } = req.query; // Recibimos el ID del usuario actual desde Android
+        const { userId } = req.query; 
+
+        // 1. Buscar al usuario para ver su rol
+        const usuarioSolicitante = await Usuario.findById(userId);
+
+        if (!usuarioSolicitante) {
+            return res.status(404).json({ message: "Usuario no identificado" });
+        }
 
         let filtro = {};
 
-        if (userId) {
-            // LÓGICA DE ROLES:
-            // Muéstrame tableros donde SOY EL DUEÑO... O... donde SOY MIEMBRO
+        // 2. LÓGICA DE SUPER ADMIN
+        if (usuarioSolicitante.rolGlobal === 'ADMIN') {
+            console.log(`Acceso ADMIN concedido a: ${usuarioSolicitante.nombre}`);
+            // El filtro se queda vacío {} para que traiga TODO (God Mode)
+        } else {
+            // 3. Lógica Normal (User)
             filtro = {
                 $or: [
                     { owner: userId },
-                    { members: userId },
-                    { admin}
+                    { members: userId }
                 ]
             };
         }
-        // Si no hay userId y eres ADMIN (validación extra), podrías devolver todo.
-        // Por defecto, si no envías userId, devuelve todo (comportamiento actual).
 
         const tableros = await Tablero.find(filtro)
             .populate("owner", "nombre email")
