@@ -2,14 +2,32 @@ const express = require("express");
 const router = express.Router();
 const Tablero = require("../models/Tablero");
 const Usuario = require("../models/Usuario");
+const Notificacion = require("../models/Notification");
 
-// GET: Obtener todos los tableros (Opcional: filtrar por usuario)
+// GET: Obtener tableros filtrados por usuario (Owner o Miembro)
 router.get("/", async (req, res) => {
     try {
-        // En una app real filtrarías por owner: req.query.userId
-        const tableros = await Tablero.find()
-        .populate("owner", "nombre email")
-        .populate("members", "nombre email");
+        const { userId } = req.query; // Recibimos el ID del usuario actual desde Android
+
+        let filtro = {};
+
+        if (userId) {
+            // LÓGICA DE ROLES:
+            // Muéstrame tableros donde SOY EL DUEÑO... O... donde SOY MIEMBRO
+            filtro = {
+                $or: [
+                    { owner: userId },
+                    { members: userId }
+                ]
+            };
+        }
+        // Si no hay userId y eres ADMIN (validación extra), podrías devolver todo.
+        // Por defecto, si no envías userId, devuelve todo (comportamiento actual).
+
+        const tableros = await Tablero.find(filtro)
+            .populate("owner", "nombre email")
+            .populate("members", "nombre email");
+            
         res.json(tableros);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -48,37 +66,54 @@ router.delete("/:id", async (req, res) => {
 });
 
 router.put("/:id/miembros", async (req, res) => {
-    const { email } = req.body; // El frontend envía el correo
+    const { email } = req.body;
     
     try {
-        // 1. Buscar al usuario por correo
         const usuarioInvitado = await Usuario.findOne({ email });
-        
         if (!usuarioInvitado) {
-            return res.status(404).json({ message: "Usuario no encontrado con ese correo" });
+            return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        // 2. Buscar el tablero
         const tablero = await Tablero.findById(req.params.id);
         if (!tablero) {
             return res.status(404).json({ message: "Tablero no encontrado" });
         }
 
-        // 3. Evitar duplicados
+        // --- NUEVA VALIDACIÓN: NO INVITARSE AL DUEÑO ---
+        // Comparamos los IDs como strings
+        if (tablero.owner.toString() === usuarioInvitado._id.toString()) {
+            return res.status(400).json({ message: "No puedes invitarte a ti mismo, ya eres el dueño." });
+        }
+        // -----------------------------------------------
+
         if (tablero.members.includes(usuarioInvitado._id)) {
             return res.status(400).json({ message: "El usuario ya es miembro" });
         }
 
-        // 4. Agregar y guardar
         tablero.members.push(usuarioInvitado._id);
         await tablero.save();
 
-        // 5. Devolver tablero actualizado (populado para mostrar nombres)
         const tableroActualizado = await Tablero.findById(req.params.id)
             .populate("owner", "nombre email")
             .populate("members", "nombre email");
 
         res.json(tableroActualizado);
+
+        // Crear notificación para el usuario invitado
+        try {
+            tablero.members.push(usuarioInvitado._id);
+            await tablero.save();
+
+            const notificacion = new Notificacion({
+                usuarioDestino: usuarioInvitado._id,
+                mensaje: `Has sido invitado al tablero: ${tablero.titulo}`
+            });
+            await notificacion.save();
+
+            res.json(tablero);
+        } catch (err) {
+            res.status(500).json({ error: err.message});
+        }
 
     } catch (err) {
         res.status(500).json({ error: err.message });
