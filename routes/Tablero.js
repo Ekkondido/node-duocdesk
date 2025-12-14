@@ -124,4 +124,35 @@ router.put("/:id/miembros", async (req, res) => {
     }
 });
 
+router.delete("/:id/miembros/:miembroId", async (req, res) => {
+    try {
+        const { id, miembroId } = req.params;
+
+        // 1. Buscar tablero
+        const tablero = await Tablero.findById(id);
+        if (!tablero) {
+            return res.status(404).json({ message: "Tablero no encontrado" });
+        }
+
+        // 2. Filtrar la lista (sacar al miembro)
+        // Guardamos todos los que NO sean el ID que queremos borrar
+        tablero.members = tablero.members.filter(
+            (member) => member.toString() !== miembroId
+        );
+
+        await tablero.save();
+
+        // 3. Devolver tablero actualizado
+        const tableroActualizado = await Tablero.findById(id)
+            .populate("owner", "nombre email")
+            .populate("members", "nombre email");
+
+        res.json(tableroActualizado);
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
 module.exports = router;
