@@ -25,7 +25,7 @@ Clona este repositorio:
     ```
 
 cd DuocDesk - para ubicarse en la carpeta
-npm install - ejecutamos 
+npm install - ejecutamos (se instalan express, mongoose)
 Port 4000
 MONGO_URI=mongodb://98.91.150.2:27017/DuocDesk
 npm start - para iniciar con el Backend
