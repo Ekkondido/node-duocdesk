@@ -12,13 +12,17 @@ app.use(express.json());
 // Conectar MongoDB
 connectDB();
 
-// Rutas
+// --- RUTAS (Aquí es donde ocurre la magia) ---
 app.use("/api/usuarios", require("./routes/Usuario"));
 app.use("/api/tableros", require("./routes/Tablero"));
 
+// AGREGAR ESTA LÍNEA PARA QUE FUNCIONEN LAS NOTIFICACIONES:
+app.use("/api/notificaciones", require("./routes/Notification")); 
+// (Asegúrate que el archivo se llame 'Notification.js' o 'Notificacion.js' en la carpeta routes y coincida aquí)
+
 // Ruta de prueba
 app.get("/", (req, res) => {
-    res.send("API DuocDesk funcionando correctamente");
+    res.send("API DuocDesk funcionando correctamente 🚀");
 });
 
 const PORT = process.env.PORT || 4000;

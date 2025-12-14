@@ -65,6 +65,8 @@ router.delete("/:id", async (req, res) => {
     }
 });
 
+// node-duocdesk/routes/Tablero.js
+
 router.put("/:id/miembros", async (req, res) => {
     const { email } = req.body;
     
@@ -79,44 +81,46 @@ router.put("/:id/miembros", async (req, res) => {
             return res.status(404).json({ message: "Tablero no encontrado" });
         }
 
-        // --- NUEVA VALIDACIÓN: NO INVITARSE AL DUEÑO ---
-        // Comparamos los IDs como strings
+        // Validación: No invitarse a sí mismo
         if (tablero.owner.toString() === usuarioInvitado._id.toString()) {
-            return res.status(400).json({ message: "No puedes invitarte a ti mismo, ya eres el dueño." });
+            return res.status(400).json({ message: "No puedes invitarte a ti mismo, eres el dueño." });
         }
-        // -----------------------------------------------
 
+        // Validación: Ya es miembro
         if (tablero.members.includes(usuarioInvitado._id)) {
             return res.status(400).json({ message: "El usuario ya es miembro" });
         }
 
+        // 1. AGREGAR MIEMBRO
         tablero.members.push(usuarioInvitado._id);
         await tablero.save();
 
+        // 2. CREAR NOTIFICACIÓN (¡Corregido el nombre del campo!)
+        try {
+            const nuevaNoti = new Notificacion({
+                usuarioDestino: usuarioInvitado._id,
+                // AQUÍ ESTABA EL ERROR: Es 'nombre_tablero', no 'titulo'
+                mensaje: `Has sido invitado al tablero: ${tablero.nombre_tablero}`
+            });
+            await nuevaNoti.save();
+        } catch (notiError) {
+            console.error("Error creando notificación:", notiError);
+            // No detenemos el flujo si falla la noti, pero lo registramos
+        }
+
+        // 3. RESPONDER UNA SOLA VEZ AL FINAL
         const tableroActualizado = await Tablero.findById(req.params.id)
             .populate("owner", "nombre email")
             .populate("members", "nombre email");
 
         res.json(tableroActualizado);
 
-        // Crear notificación para el usuario invitado
-        try {
-            tablero.members.push(usuarioInvitado._id);
-            await tablero.save();
-
-            const notificacion = new Notificacion({
-                usuarioDestino: usuarioInvitado._id,
-                mensaje: `Has sido invitado al tablero: ${tablero.titulo}`
-            });
-            await notificacion.save();
-
-            res.json(tablero);
-        } catch (err) {
-            res.status(500).json({ error: err.message});
-        }
-
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error(err);
+        // Validación para no responder si ya se enviaron headers (por si acaso)
+        if (!res.headersSent) {
+            res.status(500).json({ error: err.message });
+        }
     }
 });
 

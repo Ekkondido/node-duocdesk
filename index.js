@@ -1,27 +1,33 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const connectDB = require('./config/db');
-const { initBucket } = require('./gfsBucket'); // <--- IMPORTANTE: Importar esto
+//! en descanso.js
+// require("dotenv").config();
+// const express = require("express");
+// const cors = require("cors");
+// const connectDB = require("./config/db");
 
-const app = express();
+// const app = express();
 
-// Conectar Mongo
-connectDB();
+// // Middlewares
+// app.use(cors());
+// app.use(express.json());
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
+// // Conectar MongoDB
+// connectDB();
 
-// Rutas correctas: SOLO este
-app.use("/api/usuarios", require("./routes/Usuario"));
+// // --- RUTAS (Aquí es donde ocurre la magia) ---
+// app.use("/api/usuarios", require("./routes/Usuario"));
+// app.use("/api/tableros", require("./routes/Tablero"));
 
-app.get('/', (req, res) => {
-    res.send('API DuocDesk funcionando 🚀');
-});
+// // AGREGAR ESTA LÍNEA PARA QUE FUNCIONEN LAS NOTIFICACIONES:
+// app.use("/api/notificaciones", require("./routes/Notification")); 
+// // (Asegúrate que el archivo se llame 'Notification.js' o 'Notificacion.js' en la carpeta routes y coincida aquí)
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
-});
+// // Ruta de prueba
+// app.get("/", (req, res) => {
+//     res.send("API DuocDesk funcionando correctamente 🚀");
+// });
 
+// const PORT = process.env.PORT || 4000;
+
+// app.listen(PORT, () => {
+//     console.log(`Servidor corriendo en puerto ${PORT}`);
+// });

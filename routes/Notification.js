@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Notificacion = require("../models/Notificacion");
+const Notificacion = require("../models/Notification");
 
 // GET: Obtener notificaciones NO leídas de un usuario
 router.get("/", async (req, res) => {
