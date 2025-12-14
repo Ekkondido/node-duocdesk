@@ -7,7 +7,9 @@ const Usuario = require("../models/Usuario");
 router.get("/", async (req, res) => {
     try {
         // En una app real filtrarías por owner: req.query.userId
-        const tableros = await Tablero.find().populate("owner", "nombre email");
+        const tableros = await Tablero.find()
+        .populate("owner", "nombre email")
+        .populate("members", "nombre email");
         res.json(tableros);
     } catch (err) {
         res.status(500).json({ error: err.message });
