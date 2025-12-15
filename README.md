@@ -65,8 +65,19 @@ cd node-duocdesk
 Instala todas las librerías necesarias definidas en `package.json`:
 
 ```bash
-npm install
+npm install \
+cors@^2.8.5 \
+dotenv@^16.4.5 \
+express@^5.2.1 \
+gridfs-stream@^1.1.1 \
+mongoose@7.6.3 \
+multer@^1.4.5-lts.1 \
+multer-gridfs-storage@^5.0.2
 ```
+
+> Se utiliza `gridfs-stream` en lugar de `GridFSBucket` nativo debido a problemas
+> de compatibilidad y estabilidad detectados durante el desarrollo.
+
 
 ### 3️⃣ Configurar variables de entorno
 
